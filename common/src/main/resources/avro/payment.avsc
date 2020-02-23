@@ -1,0 +1,22 @@
+[
+   {
+      "namespace": "com.niroren.paymentservice.dto",
+      "type": "enum",
+      "name": "ValidationResult",
+      "symbols": ["PENDING","AUTHORIZED","REJECTED"]
+   },
+   {
+      "namespace": "com.niroren.paymentservice.dto",
+      "type": "record",
+      "name": "Payment",
+      "fields": [
+         {"name": "paymentId", "type": "string"},
+         {"name": "userId", "type": "string"},
+         {"name": "payeeId", "type": "string"},
+         {"name": "amount", "type": "double"},
+         {"name": "currency", "type": "string"},
+         {"name": "paymentMethodId", "type": "string"},
+         {"name": "validationResult", "type": "com.niroren.paymentservice.dto.ValidationResult", "default": "PENDING"}
+      ]
+   }
+]

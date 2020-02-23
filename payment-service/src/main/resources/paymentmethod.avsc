@@ -1,0 +1,19 @@
+[
+   {
+      "namespace": "com.niroren.paymentservice.dto",
+      "type": "enum",
+      "name": "PaymentMethodType",
+      "symbols" : ["BANK_ACCOUNT", "CREDIT_CARD"]
+   },
+   {
+      "namespace": "com.niroren.paymentservice.dto",
+      "type": "record",
+      "name": "PaymentMethod",
+      "fields": [
+         {"name": "paymentMethodId", "type": "string"},
+         {"name": "type", "type": "com.niroren.paymentservice.dto.PaymentMethodType"},
+         {"name": "name", "type": "string"},
+         {"name": "last4", "type": "int"}
+      ]
+   }
+]
