@@ -3,6 +3,7 @@ package com.niroren.paymentservice.rest;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.niroren.paymentservice.dto.Payment;
+import com.niroren.paymentservice.dto.ValidatedPayment;
 import com.niroren.paymentservice.services.IPaymentsService;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
@@ -14,8 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.net.URISyntaxException;
+import javax.ws.rs.core.UriInfo;
 import java.time.Duration;
 
 @Component
@@ -42,10 +42,10 @@ public class PaymentsAsyncMediator {
         logger.info("Streams in init mediator: " + ((service.getStreams() != null) ? service.getStreams().toString() : null));
     }
 
-    private void tryCompleteOutstandingRequest(String id, Payment payment) {
+    private void tryCompleteOutstandingRequest(String id, ValidatedPayment validatedPayment) {
         AsyncResponse suspended = outstandingRequests.getIfPresent(id);
         if (suspended != null) {
-            suspended.resume(payment);
+            suspended.resume(validatedPayment);
         }
     }
 
@@ -53,19 +53,19 @@ public class PaymentsAsyncMediator {
         logger.info("Streams in printSteams: " + ((service.getStreams() != null) ? service.getStreams().toString() : null));
     }
 
-    public void submitPaymentAsync(Payment payment, AsyncResponse asyncResponse) {
-        service.submitPayment(payment, callback(asyncResponse, payment));
+    public void submitPaymentAsync(Payment payment, AsyncResponse asyncResponse, UriInfo uriInfo) {
+        service.submitPayment(payment, callback(asyncResponse, payment, uriInfo));
     }
 
     public void retrievePaymentAsync(String paymentId, AsyncResponse asyncResponse) {
         try {
-            final Payment payment = service.retrievePayment(paymentId);
-            if (payment == null) {
+            final ValidatedPayment validatedPayment = service.retrievePayment(paymentId);
+            if (validatedPayment == null) {
                 logger.info("Suspending GET as payment is not present for id " + paymentId);
                 outstandingRequests.put(paymentId, asyncResponse);
             } else {
                 logger.info("Payment " + paymentId + " was found in store.");
-                asyncResponse.resume(payment);
+                asyncResponse.resume(validatedPayment);
             }
         } catch (InvalidStateStoreException e) {
             // Store not ready yet, suspending
@@ -73,20 +73,13 @@ public class PaymentsAsyncMediator {
         }
     }
 
-    private Callback callback(AsyncResponse response, Payment payment) {
+    private Callback callback(AsyncResponse response, Payment payment, UriInfo uriInfo) {
         return ((recordMetadata, e) -> {
             if (e != null) {
                 response.resume(e);
             } else {
                 logger.info("Payment request submitted: " + payment.toString());
-
-                try {
-                    URI uri =new URI("/payments/" + payment.getPaymentId());
-                    response.resume(Response.accepted(uri).build());
-                } catch (URISyntaxException urie) {
-                    logger.error("Error building payment url, reason: " + urie.getMessage(), urie);
-                    response.resume(urie);
-                }
+                response.resume(Response.accepted(uriInfo.getRequestUriBuilder().segment(payment.getPaymentId()).build()).build());
             }
         });
     }

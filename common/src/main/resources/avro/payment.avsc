@@ -15,8 +15,16 @@
          {"name": "payeeId", "type": "string"},
          {"name": "amount", "type": "double"},
          {"name": "currency", "type": "string"},
-         {"name": "paymentMethodId", "type": "string"},
-         {"name": "validationResult", "type": "com.niroren.paymentservice.dto.ValidationResult", "default": "PENDING"}
+         {"name": "paymentMethodId", "type": "string"}
+      ]
+   },
+   {
+      "namespace" : "com.niroren.paymentservice.dto",
+      "type": "record",
+      "name": "ValidatedPayment",
+      "fields": [
+         {"name": "payment", "type": "com.niroren.paymentservice.dto.Payment"},
+         {"name": "validation", "type": "com.niroren.paymentservice.dto.ValidationResult"}
       ]
    }
 ]

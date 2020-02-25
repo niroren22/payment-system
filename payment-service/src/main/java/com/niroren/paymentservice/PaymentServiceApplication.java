@@ -14,11 +14,7 @@ import org.springframework.context.annotation.PropertySource;
 public class PaymentServiceApplication {
 
 	public static void main(String[] args) throws Exception {
-		IStreamService paymentsService = new PaymentService();
-		paymentsService.start();
-		addShutdownHookAndBlock(paymentsService);
 		SpringApplication.run(PaymentServiceApplication.class, args);
-
 	}
 
 
@@ -30,7 +26,7 @@ public class PaymentServiceApplication {
 			} catch (final Exception ignored) {
 			}
 		}));
-		//Thread.currentThread().join();
+		Thread.currentThread().join();
 	}
 
 }

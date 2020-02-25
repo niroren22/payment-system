@@ -1,6 +1,7 @@
 package com.niroren.riskengine.persistency.dao;
 
 import com.niroren.paymentservice.dto.Payment;
+import com.niroren.paymentservice.dto.ValidatedPayment;
 import com.niroren.riskengine.model.Tables;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,8 @@ public class PaymentsDAO {
     private DSLContext dslContext;
 
     @Transactional
-    public void insertPayment(Payment payment) {
+    public void insertPayment(ValidatedPayment validatedPayment) {
+        Payment payment = validatedPayment.getPayment();
         dslContext.insertInto(Tables.PAYMENTS)
                 .set(Tables.PAYMENTS.PAYMENT_ID, payment.getPaymentId())
                 .set(Tables.PAYMENTS.FROM_USER_ID, payment.getUserId())
@@ -24,7 +26,7 @@ public class PaymentsDAO {
                 .set(Tables.PAYMENTS.AMOUNT, new BigDecimal(payment.getAmount()))
                 .set(Tables.PAYMENTS.CURRENCY, payment.getCurrency())
                 .set(Tables.PAYMENTS.PAYMENT_METHOD_ID, payment.getPaymentMethodId())
-                .set(Tables.PAYMENTS.VALIDATION_RESULT, payment.getValidationResult())
+                .set(Tables.PAYMENTS.VALIDATION_RESULT, validatedPayment.getValidation())
                 .execute();
     }
 

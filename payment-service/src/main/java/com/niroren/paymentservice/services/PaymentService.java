@@ -4,7 +4,7 @@ import com.niroren.common.serdes.*;
 import com.niroren.paymentservice.dto.Payment;
 import com.niroren.paymentservice.dto.PaymentMethod;
 import com.niroren.paymentservice.dto.User;
-import com.niroren.paymentservice.dto.ValidationResult;
+import com.niroren.paymentservice.dto.ValidatedPayment;
 import com.niroren.paymentservice.properties.Configuration;
 import com.niroren.paymentservice.utils.MockDataReader;
 import org.apache.kafka.clients.producer.Callback;
@@ -14,7 +14,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
@@ -35,9 +34,9 @@ import java.util.function.BiConsumer;
 @Service
 public class PaymentService implements IPaymentsService {
     private static Logger logger = LoggerFactory.getLogger(PaymentService.class);
-    private final static String PAYMENTS_STORE_NAME = "payments-store";
+    private final static String VALIDATED_PAYMENTS_STORE_NAME = "validated-payments-store";
 
-    private List<BiConsumer<String, Payment>> validationListeners = new ArrayList<>();
+    private List<BiConsumer<String, ValidatedPayment>> validationListeners = new ArrayList<>();
     private List<String> currencies;
     private KafkaStreams streams;
 
@@ -53,6 +52,34 @@ public class PaymentService implements IPaymentsService {
     @PostConstruct
     private void init() {
         this.currencies = Collections.unmodifiableList(MockDataReader.readModelEntities(configuration.getMockDataConfig().getCurrencyCodesFilePath(), String.class));
+        this.streams = new KafkaStreams(
+                createPaymentsView().build(),
+                getStreamProperties(createTempStateDirectory()));
+
+        streams.cleanUp();
+
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        streams.setStateListener((newState, oldState) -> {
+            if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
+                startLatch.countDown();
+            }
+        });
+
+        streams.start();
+
+        try {
+            if (!startLatch.await(60, TimeUnit.SECONDS)) {
+                throw new RuntimeException("Streams never finished rebalancing on startup");
+            }
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        logger.info("Payment service was started successfully.");
+
+        logger.info("Streams after init: " + ((streams != null) ? streams.toString() : null));
+
+
     }
 
     public KafkaStreams getStreams() {
@@ -104,13 +131,13 @@ public class PaymentService implements IPaymentsService {
     }
 
     @Override
-    public Payment retrievePayment(String paymentId) {
+    public ValidatedPayment retrievePayment(String paymentId) {
         logger.info("Streams in retrieve payment: " + ((streams != null) ? streams.toString() : null));
         return getPaymentStore().get(paymentId);
     }
 
     @Override
-    public void registerValidationListener(BiConsumer<String, Payment> onValidationListener) {
+    public void registerValidationListener(BiConsumer<String, ValidatedPayment> onValidationListener) {
         validationListeners.add(onValidationListener);
     }
 
@@ -124,9 +151,9 @@ public class PaymentService implements IPaymentsService {
 
     private StreamsBuilder createPaymentsView() {
         final StreamsBuilder builder = new StreamsBuilder();
-        Predicate<String, Payment> isValidated = (id, pmt) -> !ValidationResult.PENDING.equals(pmt.getValidationResult());
-        builder.table("payments", Consumed.with(Serdes.String(), new PaymentSerde()), Materialized.as(PAYMENTS_STORE_NAME))
-               .filter(isValidated)
+        //Predicate<String, Payment> isValidated = (id, pmt) -> !ValidationResult.PENDING.equals(pmt.getValidationResult());
+        builder.table("validated-payments", Consumed.with(Serdes.String(), new ValidatedPaymentSerde()), Materialized.as(VALIDATED_PAYMENTS_STORE_NAME))
+               //.filter(isValidated)
                .toStream()
                .foreach(this::executeValidationListeners);
 
@@ -143,12 +170,12 @@ public class PaymentService implements IPaymentsService {
         return streamConfig;
     }
 
-    private void executeValidationListeners(String id, Payment payment) {
+    private void executeValidationListeners(String id, ValidatedPayment payment) {
         validationListeners.forEach(vl -> vl.accept(id, payment));
     }
 
-    private ReadOnlyKeyValueStore<String, Payment> getPaymentStore() {
-        return streams.store(PAYMENTS_STORE_NAME, QueryableStoreTypes.keyValueStore());
+    private ReadOnlyKeyValueStore<String, ValidatedPayment> getPaymentStore() {
+        return streams.store(VALIDATED_PAYMENTS_STORE_NAME, QueryableStoreTypes.keyValueStore());
     }
 
     private void validatePayment(Payment payment) {

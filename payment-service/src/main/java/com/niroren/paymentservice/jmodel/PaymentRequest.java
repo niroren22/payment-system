@@ -24,7 +24,6 @@ public class PaymentRequest {
                 .setUserId(this.userId)
                 .setPayeeId(this.payeeId)
                 .setPaymentMethodId(this.paymentMethodId)
-                .setValidationResult(ValidationResult.PENDING)
                 .setPaymentId(UUID.randomUUID().toString())
                 .build();
     }

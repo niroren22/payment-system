@@ -1,8 +1,9 @@
 package com.niroren.riskengine;
 
+import com.niroren.common.serdes.PaymentSerde;
+import com.niroren.common.serdes.ValidatedPaymentSerde;
 import com.niroren.common.services.IStreamService;
-import com.niroren.common.serdes.*;
-import com.niroren.paymentservice.dto.Payment;
+import com.niroren.paymentservice.dto.ValidatedPayment;
 import com.niroren.paymentservice.dto.ValidationResult;
 import com.niroren.riskengine.processors.PaymentProcessor;
 import org.apache.kafka.common.serialization.Serdes;
@@ -12,6 +13,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Printed;
+import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,12 +53,17 @@ public class RiskEngineService implements IStreamService {
 
     private KafkaStreams processStreams() {
         final StreamsBuilder builder = new StreamsBuilder();
-        final KStream<String, Payment> payments = builder
+        final KStream<String, ValidatedPayment> validated = builder
                 .stream("payments", Consumed.with(Serdes.String(), new PaymentSerde()))
-                .filter((id,payment) -> ValidationResult.PENDING.equals(payment.getValidationResult()));
+                .mapValues(pmt -> ValidatedPayment.newBuilder()
+                        .setPayment(pmt)
+                        .setValidation(performRiskAssessment())
+                        .build());
 
-        payments.print(Printed.toSysOut());
-        payments.process(PaymentProcessor::new);
+        validated.print(Printed.toSysOut());
+        validated.process(PaymentProcessor::new);
+
+        validated.to("validated-payments", Produced.with(Serdes.String(), new ValidatedPaymentSerde()));
 
         return new KafkaStreams(builder.build(), getStreamsConfiguration());
     }
@@ -75,6 +82,11 @@ public class RiskEngineService implements IStreamService {
         if (streams != null) {
             streams.close();
         }
+    }
+
+    private static ValidationResult performRiskAssessment() {
+        double rand = Math.random();
+        return rand < 0.7d ? ValidationResult.AUTHORIZED : ValidationResult.REJECTED;
     }
 
 }
