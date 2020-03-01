@@ -37,9 +37,7 @@ public class PaymentsAsyncMediator {
 
     @PostConstruct
     private void init() {
-        service.registerValidationListener(this::tryCompleteOutstandingRequest);
-
-        logger.info("Streams in init mediator: " + ((service.getStreams() != null) ? service.getStreams().toString() : null));
+        service.registerValidatedListener(this::tryCompleteOutstandingRequest);
     }
 
     private void tryCompleteOutstandingRequest(String id, ValidatedPayment validatedPayment) {
@@ -47,10 +45,6 @@ public class PaymentsAsyncMediator {
         if (suspended != null) {
             suspended.resume(validatedPayment);
         }
-    }
-
-    public void printStreams() {
-        logger.info("Streams in printSteams: " + ((service.getStreams() != null) ? service.getStreams().toString() : null));
     }
 
     public void submitPaymentAsync(Payment payment, AsyncResponse asyncResponse, UriInfo uriInfo) {

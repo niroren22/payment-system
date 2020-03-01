@@ -2,7 +2,7 @@ package com.niroren.riskengine;
 
 import com.niroren.common.serdes.PaymentSerde;
 import com.niroren.common.serdes.ValidatedPaymentSerde;
-import com.niroren.common.services.IStreamService;
+import com.niroren.common.services.BaseStreamService;
 import com.niroren.paymentservice.dto.ValidatedPayment;
 import com.niroren.paymentservice.dto.ValidationResult;
 import com.niroren.riskengine.processors.PaymentProcessor;
@@ -16,42 +16,31 @@ import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-public class RiskEngineService implements IStreamService {
+@Service
+public class RiskEngineService extends BaseStreamService {
     private static final Logger logger = LoggerFactory.getLogger(RiskEngineService.class);
 
-    private KafkaStreams streams;
+    @Autowired
+    public RiskEngineService(@Value("${spring.kafka.application.id}") String appId,
+                             @Value("${kafka.bootstrap-servers}") String bootstrapServers) {
+        super(appId, bootstrapServers);
+    }
 
     @Override
     public void start() {
-        streams = processStreams();
-        streams.cleanUp();
-
-        final CountDownLatch startLatch = new CountDownLatch(1);
-        streams.setStateListener((newState, oldState) -> {
-            if (newState == KafkaStreams.State.RUNNING && oldState != KafkaStreams.State.RUNNING) {
-                startLatch.countDown();
-            }
-        });
-
-        streams.start();
-
-        try {
-            if (!startLatch.await(60, TimeUnit.SECONDS)) {
-                throw new RuntimeException("Streams never finished rebalancing on startup");
-            }
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
+        super.start();
         logger.info("Risk Engine service was started successfully.");
     }
 
-    private KafkaStreams processStreams() {
+    @Override
+    public KafkaStreams processStreams(Properties streamsConfig) {
         final StreamsBuilder builder = new StreamsBuilder();
         final KStream<String, ValidatedPayment> validated = builder
                 .stream("payments", Consumed.with(Serdes.String(), new PaymentSerde()))
@@ -65,28 +54,11 @@ public class RiskEngineService implements IStreamService {
 
         validated.to("validated-payments", Produced.with(Serdes.String(), new ValidatedPaymentSerde()));
 
-        return new KafkaStreams(builder.build(), getStreamsConfiguration());
-    }
-
-    private static Properties getStreamsConfiguration() {
-        final Properties streamConfig = new Properties();
-        streamConfig.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, "risk-engine");
-        streamConfig.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        streamConfig.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1);
-        return streamConfig;
-    }
-
-    @Override
-    public void stop() {
-        logger.info("Risk Engine service was shut down.");
-        if (streams != null) {
-            streams.close();
-        }
+        return new KafkaStreams(builder.build(), streamsConfig);
     }
 
     private static ValidationResult performRiskAssessment() {
         double rand = Math.random();
         return rand < 0.7d ? ValidationResult.AUTHORIZED : ValidationResult.REJECTED;
     }
-
 }

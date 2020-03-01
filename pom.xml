@@ -24,10 +24,36 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
-	<modules>
+	<!--<modules>
 		<module>common</module>
 		<module>payment-service</module>
 		<module>risk-engine</module>
-    </modules>
+    </modules>-->
 
+    <profiles>
+        <profile>
+            <id>risk-engine</id>
+            <modules>
+                <module>common</module>
+                <module>risk-engine</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>payment-service</id>
+            <modules>
+                <module>common</module>
+                <module>payment-service</module>
+            </modules>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>de.qaware.maven</groupId>
+                <artifactId>go-offline-maven-plugin</artifactId>
+                <version>1.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>

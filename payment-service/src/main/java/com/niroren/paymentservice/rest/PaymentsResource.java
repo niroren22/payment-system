@@ -12,11 +12,9 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.concurrent.TimeUnit;
 
-//@Component
 @Path("/payments")
 public class PaymentsResource {
     private static Logger logger = LoggerFactory.getLogger(PaymentsResource.class);
@@ -24,14 +22,6 @@ public class PaymentsResource {
 
     @Autowired
     private PaymentsAsyncMediator paymentService;
-
-    @GET
-    @Path("welcome")
-    @Produces(MediaType.TEXT_HTML)
-    public Response getWelcomeMessage() {
-        paymentService.printStreams();
-        return Response.ok("Welcome to REST payment system!").build();
-    }
 
     @POST
     @ManagedAsync

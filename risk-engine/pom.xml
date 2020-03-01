@@ -16,6 +16,10 @@
 	<properties>
 		<java.version>1.8</java.version>
 		<liquibase.version>3.8.5</liquibase.version>
+		<buildDbPath>${project.build.directory}/liquibase/db;shutdown=true</buildDbPath>
+		<buildJdbcUrl>jdbc:hsqldb:${buildDbPath}</buildJdbcUrl>
+		<buildDbUser>a</buildDbUser>
+		<hsqldbVersion>2.4.0</hsqldbVersion>
 	</properties>
 
 	<dependencies>
@@ -23,19 +27,6 @@
 			<groupId>com.niroren</groupId>
 			<artifactId>common</artifactId>
 			<version>1.0-SNAPSHOT</version>
-		</dependency>
-
-		<!-- spring dependencies -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-logging</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- Queueing service dependencies -->
@@ -81,6 +72,12 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>${hsqldbVersion}</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.liquibase</groupId>
@@ -148,11 +145,12 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>${liquibase.version}</version>
 				<configuration>
-			        <changeLogFile>${project.basedir}/src/main/resources/db/changelogs/master-changelog.xml</changeLogFile>
-					<driver>${spring.datasource.driver-class-name}</driver>
-					<url>${spring.datasource.url}</url>
-					<username>${spring.datasource.username}</username>
-					<password>${spring.datasource.password}</password>
+					<changeLogFile>${liquibase.build.change-log}</changeLogFile>
+					<driver>org.hsqldb.jdbc.JDBCDriver</driver>
+					<url>${buildJdbcUrl}</url>
+					<username>${buildDbUser}</username>
+					<password></password>
+					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
 				</configuration>
 				<executions>
 					<execution>
@@ -162,7 +160,6 @@
 						</goals>
 					</execution>
 				</executions>
-
 			</plugin>
 
 			<!-- Add generated sources -->
@@ -191,6 +188,13 @@
 			<plugin>
 				<groupId>org.jooq</groupId>
 				<artifactId>jooq-codegen-maven</artifactId>
+				<dependencies>
+					<dependency>
+						<groupId>org.hsqldb</groupId>
+						<artifactId>hsqldb</artifactId>
+						<version>${hsqldbVersion}</version>
+					</dependency>
+				</dependencies>
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>
@@ -203,9 +207,12 @@
 									<pojos>true</pojos>
 								</generate>
 								<database>
-									<name>org.jooq.meta.mysql.MySQLDatabase</name>
+									<name>org.jooq.meta.hsqldb.HSQLDBDatabase</name>
 									<includes>.*</includes>
 									<excludes>DATABASECHANGELOG.*</excludes>
+									<schemata>
+										<schema><inputSchema>PUBLIC</inputSchema></schema>
+									</schemata>
 									<inputSchema>risk_engine</inputSchema>
 
 									<forcedTypes>
@@ -215,6 +222,7 @@
 											<expression>.*.validation_result</expression>
 										</forcedType>
 									</forcedTypes>
+
 								</database>
 								<target>
 									<clean>true</clean>
@@ -223,15 +231,16 @@
 								</target>
 							</generator>
 							<jdbc>
-								<driver>${spring.datasource.driver-class-name}</driver>
-								<url>${spring.datasource.url}</url>
-								<user>${spring.datasource.username}</user>
-								<password>${spring.datasource.password}</password>
+								<driver>org.hsqldb.jdbc.JDBCDriver</driver>
+								<url>${buildJdbcUrl}</url>
+								<user>${buildDbUser}</user>
+								<password></password>
 							</jdbc>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

@@ -1,6 +1,5 @@
 package com.niroren.common.serdes;
 
-import com.niroren.paymentservice.dto.Payment;
 import com.niroren.paymentservice.dto.ValidatedPayment;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;

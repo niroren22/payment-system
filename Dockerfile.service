@@ -1,0 +1,70 @@
+
+ARG APP_SERVICE_NAME
+
+FROM maven:3.6.3-jdk-11-openj9 as maven
+MAINTAINER niroren22@gmail.com
+
+#ENV DB_HOST=my-sql-db
+#ENV DB_PORT=3306
+ARG APP_SERVICE_NAME
+ENV SERVICE_NAME="${APP_SERVICE_NAME}"
+ENV KAFKA_BOOTSTRAP_SERVER_HOST=kafka-broker
+ENV KAFKA_BOOTSTRAP_SERVER_PORT=9092
+
+#VOLUME /risk-engine
+RUN mkdir -p /build
+COPY pom.xml /build/pom.xml
+
+RUN mkdir -p /build/common
+COPY common/pom.xml /build/common/pom.xml
+
+#RUN mkdir /build/risk-engine
+RUN mkdir -p /build/$SERVICE_NAME
+COPY $SERVICE_NAME/pom.xml /build/$SERVICE_NAME/pom.xml
+
+WORKDIR /build
+
+#RUN mvn -P riskengine dependency:go-offline -B
+RUN echo $SERVICE_NAME
+RUN echo $KAFKA_BOOTSTRAP_SERVER_HOST
+RUN mvn -P $SERVICE_NAME de.qaware.maven:go-offline-maven-plugin:resolve-dependencies
+
+COPY common/src /build/common/src
+COPY $SERVICE_NAME/src /build/$SERVICE_NAME/src
+
+RUN mvn -P $SERVICE_NAME install -DskipTests
+
+#RUN echo "Waiting for MySQL DB to become available..."
+#RUN ./wait-for-it.sh -h ${DB_HOST} -p ${DB_PORT} -t 30
+#RUN echo "Verified MySQL DB aviailability, starting the build..."
+#RUN ./wait-for-it.sh -h ${DB_HOST} -p ${DB_PORT} -t 30 -- echo "Verified MySQL DB aviailability, starting the build..."
+
+#RUN mvn -Ddb_host=${DB_HOST} -Ddb_port=${DB_PORT} -P riskengine clean install -DskipTests
+
+FROM openjdk:11
+
+ARG APP_SERVICE_NAME
+ENV SERVICE_NAME="${APP_SERVICE_NAME}"
+
+RUN mkdir -p /app
+WORKDIR /app
+
+COPY wait-for-it.sh /app/wait-for-it.sh
+COPY include /app/include
+
+RUN chmod +x include/run_service.sh
+
+COPY --from=maven /build/$SERVICE_NAME/target/*.jar /app
+
+ENV SERVICE_JAR_FILE=/app/$SERVICE_NAME-1.0-SNAPSHOT.jar
+
+CMD ["include/run_service.sh"]
+
+
+#ADD target/risk-engine-1.0-SNAPSHOT.jar /risk-engine-1.0.jar
+#ADD wait-for-it.sh /wait-for-it.sh
+
+
+#CMD [""]
+#ENTRYPOINT ["java","-jar","risk-engine/target/risk-engine-1.0.jar"]
+#ENTRYPOINT ["/usr/payments/wait-for-it.sh","-h","${DB_HOST}","-p","${DB_PORT}","-t","30","--","java","-jar","risk-engine/target/risk-engine-1.0-SNAPSHOT.jar"]
