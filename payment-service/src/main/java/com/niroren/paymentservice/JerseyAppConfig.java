@@ -2,7 +2,6 @@ package com.niroren.paymentservice;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.avro.AvroMapper;
 import com.niroren.paymentservice.exceptions.AppExceptionsMapper;
 import com.niroren.paymentservice.rest.PaymentsResource;
 import com.niroren.paymentservice.rest.UsersResource;
@@ -34,12 +33,9 @@ public class JerseyAppConfig extends ResourceConfig {
     @Provider
     public static class AvroMapperProvider implements ContextResolver<ObjectMapper> {
 
-        private final AvroMapper avroMapper = new AvroMapper();
-
         @Override
         public ObjectMapper getContext(Class<?> type) {
             return new ObjectMapper().addMixIn(SpecificRecordBase.class, AvroJsonMixin.class);
-            //return avroMapper;
         }
     }
 

@@ -1,5 +1,6 @@
 package com.niroren.riskengine;
 
+import com.niroren.common.Topics;
 import com.niroren.common.serdes.PaymentSerde;
 import com.niroren.common.serdes.ValidatedPaymentSerde;
 import com.niroren.common.services.BaseStreamService;
@@ -9,7 +10,6 @@ import com.niroren.riskengine.processors.PaymentProcessor;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Printed;
@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.Properties;
 
 @Service
@@ -43,7 +42,7 @@ public class RiskEngineService extends BaseStreamService {
     public KafkaStreams processStreams(Properties streamsConfig) {
         final StreamsBuilder builder = new StreamsBuilder();
         final KStream<String, ValidatedPayment> validated = builder
-                .stream("payments", Consumed.with(Serdes.String(), new PaymentSerde()))
+                .stream(Topics.getPaymentsTopic(), Consumed.with(Serdes.String(), new PaymentSerde()))
                 .mapValues(pmt -> ValidatedPayment.newBuilder()
                         .setPayment(pmt)
                         .setValidation(performRiskAssessment())
@@ -52,7 +51,7 @@ public class RiskEngineService extends BaseStreamService {
         validated.print(Printed.toSysOut());
         validated.process(PaymentProcessor::new);
 
-        validated.to("validated-payments", Produced.with(Serdes.String(), new ValidatedPaymentSerde()));
+        validated.to(Topics.getPaymentsValidationTopic(), Produced.with(Serdes.String(), new ValidatedPaymentSerde()));
 
         return new KafkaStreams(builder.build(), streamsConfig);
     }

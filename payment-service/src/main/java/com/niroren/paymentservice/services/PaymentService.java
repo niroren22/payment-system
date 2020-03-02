@@ -1,5 +1,6 @@
 package com.niroren.paymentservice.services;
 
+import com.niroren.common.Topics;
 import com.niroren.common.serdes.ValidatedPaymentSerde;
 import com.niroren.common.services.BaseStreamService;
 import com.niroren.paymentservice.dto.Payment;
@@ -46,17 +47,13 @@ public class PaymentService extends BaseStreamService implements IPaymentsServic
     @Value("${kafka.payment-validations.store.name}")
     private String validatedPaymentsStoreName;
 
-    @Value("${mock-data.currency-codes.file-path")
+    @Value("${mock-data.currency-codes.file-path}")
     private String currencyCodesDataFilePath;
-
-    @Value("${kafka.payment-validations.topic}")
-    private String paymentsValidationTopic;
 
     @Autowired
     public PaymentService(@Value("${kafka.payments.streams.application.id}") String appId,
                           @Value("${kafka.bootstrap-servers}") String bootstrapServers) {
         super(appId, bootstrapServers);
-
     }
 
     @PostConstruct
@@ -104,7 +101,7 @@ public class PaymentService extends BaseStreamService implements IPaymentsServic
 
     private StreamsBuilder createPaymentsView() {
         final StreamsBuilder builder = new StreamsBuilder();
-        builder.table(paymentsValidationTopic, Consumed.with(Serdes.String(), new ValidatedPaymentSerde()), Materialized.as(validatedPaymentsStoreName))
+        builder.table(Topics.getPaymentsValidationTopic(), Consumed.with(Serdes.String(), new ValidatedPaymentSerde()), Materialized.as(validatedPaymentsStoreName))
                .toStream()
                .foreach(this::executeValidationListeners);
 

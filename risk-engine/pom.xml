@@ -119,6 +119,12 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<paymentTopic>payments</paymentTopic>
+						<paymentValidationTopic>validated-payments</paymentValidationTopic>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
 
 			<!-- Read properties from file -->
@@ -149,8 +155,9 @@
 					<driver>org.hsqldb.jdbc.JDBCDriver</driver>
 					<url>${buildJdbcUrl}</url>
 					<username>${buildDbUser}</username>
-					<password></password>
+					<password/>
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+					<defaultSchemaName>${jooq.build.schema-name}</defaultSchemaName>
 				</configuration>
 				<executions>
 					<execution>
@@ -211,9 +218,12 @@
 									<includes>.*</includes>
 									<excludes>DATABASECHANGELOG.*</excludes>
 									<schemata>
-										<schema><inputSchema>PUBLIC</inputSchema></schema>
+										<schema>
+											<inputSchema>${jooq.build.schema-name}</inputSchema>
+											<outputSchema>${jooq.production.schema-name}</outputSchema>
+										</schema>
 									</schemata>
-									<inputSchema>risk_engine</inputSchema>
+									<!--<inputSchema>${liquibase.schema-name}</inputSchema>-->
 
 									<forcedTypes>
 										<forcedType>
@@ -234,7 +244,7 @@
 								<driver>org.hsqldb.jdbc.JDBCDriver</driver>
 								<url>${buildJdbcUrl}</url>
 								<user>${buildDbUser}</user>
-								<password></password>
+								<password/>
 							</jdbc>
 						</configuration>
 					</execution>

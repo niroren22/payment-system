@@ -1,5 +1,6 @@
 package com.niroren.paymentservice.services;
 
+import com.niroren.common.Topics;
 import com.niroren.common.serdes.PaymentSerde;
 import com.niroren.paymentservice.dto.Payment;
 import org.apache.kafka.clients.producer.Callback;
@@ -15,9 +16,6 @@ import java.util.Properties;
 
 @Component
 public class PaymentsProducer {
-
-    @Value("${kafka.payments.topic}")
-    private String paymentsTopic;
 
     private final KafkaProducer<String, Payment> producer;
 
@@ -36,7 +34,7 @@ public class PaymentsProducer {
     }
 
     public void sendPayment(Payment payment, Callback callback) {
-        producer.send(new ProducerRecord<>(paymentsTopic, payment.getPaymentId(), payment), callback);
+        producer.send(new ProducerRecord<>(Topics.getPaymentsTopic(), payment.getPaymentId(), payment), callback);
     }
 
 }

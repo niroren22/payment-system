@@ -7,7 +7,7 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: risk_engine
+      MYSQL_DATABASE: RISK_ENGINE
       MYSQL_USER: re_user
       MYSQL_PASSWORD: letmein
     ports:
@@ -61,6 +61,8 @@ services:
       args:
         APP_SERVICE_NAME: payment-service
     environment:
+      PAYMENT_SERVICE_HOST: payment-service
+      PAYMENT_SERVICE_PORT: 8080
       KAFKA_BOOTSTRAP_SERVER_HOST: kafka-broker
       KAFKA_BOOTSTRAP_SERVER_PORT: 9092
     ports:

@@ -14,13 +14,6 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>confluent</id>
-			<url>https://packages.confluent.io/maven/</url>
-		</pluginRepository>
-	</pluginRepositories>
-
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
@@ -45,10 +38,6 @@
 		</dependency>
 
 		<!-- Kafka artifacts -->
-		<!--<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka</artifactId>
-		</dependency>-->
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka-clients</artifactId>
@@ -88,11 +77,6 @@
 			<artifactId>spring-kafka-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!--<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<scope>runtime</scope>
-		</dependency>-->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -146,11 +130,12 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<!--<configuration>
-					<jvmarguments>
-						-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005
-					</jvmarguments>
-				</configuration>-->
+				<configuration>
+					<systemPropertyVariables>
+						<paymentTopic>payments</paymentTopic>
+						<paymentValidationTopic>validated-payments</paymentValidationTopic>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -8,7 +8,7 @@
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
     <changeSet id="20200209-create-payments-table" author="niroren">
-        <createTable tableName="payments">
+        <createTable tableName="PAYMENTS">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
@@ -30,7 +30,7 @@
     </changeSet>
 
     <changeSet id="20200222-add-payment-verification-result" author="niroren">
-        <addColumn tableName="payments">
+        <addColumn tableName="PAYMENTS">
             <column name="validation_result" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>

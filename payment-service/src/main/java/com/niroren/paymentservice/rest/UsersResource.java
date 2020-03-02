@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,8 +32,13 @@ public class UsersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<User> getAllUsers() {
-        return usersService.getAllUsers();
+    public Collection<User> getUsers(@QueryParam("email") String email) {
+        if (Strings.isNullOrEmpty(email)) {
+            return usersService.getAllUsers();
+        }
+
+        Optional<User> userByEmail = usersService.getUserByEmail(email);
+        return userByEmail.map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
     @GET
@@ -42,8 +48,6 @@ public class UsersResource {
         if (Strings.isNullOrEmpty(userId)) {
             throw new NotAcceptableException("must provide a user-id");
         }
-
-        //TODO niroren - remove 'userId' from payment method returned.
 
         List<PaymentMethod> userPaymentMethods = usersService.getUserPaymentMethods(userId);
         if (userPaymentMethods == null) {

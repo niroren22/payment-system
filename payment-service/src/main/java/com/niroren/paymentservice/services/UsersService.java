@@ -6,7 +6,6 @@ import com.niroren.paymentservice.utils.MockDataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -18,7 +17,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@PropertySource("classpath:application.properties")
 public class UsersService implements IUsersService {
     private static Logger logger = LoggerFactory.getLogger(UsersService.class);
 

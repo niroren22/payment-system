@@ -14,7 +14,8 @@
 	<properties>
 		<avro.version>1.8.2</avro.version>
 		<kafka.version>2.4.0</kafka.version>
-		<confluent.version>5.4.0</confluent.version>
+        <kafka.payments.topic>payments</kafka.payments.topic>
+        <kafka.payment-validations.topic>validated-payments</kafka.payment-validations.topic>
 	</properties>
 
 	<parent>
@@ -23,12 +24,6 @@
 		<version>2.2.4.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-
-	<!--<modules>
-		<module>common</module>
-		<module>payment-service</module>
-		<module>risk-engine</module>
-    </modules>-->
 
     <profiles>
         <profile>
@@ -44,6 +39,17 @@
                 <module>common</module>
                 <module>payment-service</module>
             </modules>
+        </profile>
+        <profile>
+            <id>all</id>
+            <modules>
+                <module>common</module>
+                <module>payment-service</module>
+                <module>risk-engine</module>
+            </modules>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
         </profile>
     </profiles>
 
