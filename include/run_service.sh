@@ -14,4 +14,4 @@ echo "Waiting for Kafka Broker to be available..."
 /app/wait-for-it.sh -h $KAFKA_BOOTSTRAP_SERVER_HOST -p $KAFKA_BOOTSTRAP_SERVER_PORT -t 30
 echo "Verified Kafka Broker aviailability."
 
-java -Dspring.profiles.active=docker -jar $SERVICE_JAR_FILE
+java -Dspring.profiles.active=docker -DpaymentTopic=$PAYMENTS_TOPIC -DpaymentValidationTopic=$PAYMENT_VALIDATIONS_TOPIC -jar $SERVICE_JAR_FILE

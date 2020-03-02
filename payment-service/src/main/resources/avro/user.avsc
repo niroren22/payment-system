@@ -32,12 +32,7 @@
          {"name": "firstName", "type": "string", "order": "ignore"},
          {"name": "lastName", "type": "string", "order": "ignore"},
          {"name": "email", "type": "string", "order": "ignore"},
-         {"name": "gender", "type": "com.niroren.paymentservice.dto.Gender", "order": "ignore"},
-         {"name": "paymentMethods", "type": {
-             "type": "array",
-             "items": "com.niroren.paymentservice.dto.PaymentMethod"
-           }
-         }
+         {"name": "gender", "type": "com.niroren.paymentservice.dto.Gender", "order": "ignore"}
       ]
    }
 ]
