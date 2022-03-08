@@ -15,7 +15,7 @@
 
 	<properties>
 		<java.version>1.8</java.version>
-		<liquibase.version>3.8.5</liquibase.version>
+		<liquibase.version>4.8.0</liquibase.version>
 		<buildDbPath>${project.build.directory}/liquibase/db;shutdown=true</buildDbPath>
 		<buildJdbcUrl>jdbc:hsqldb:${buildDbPath}</buildJdbcUrl>
 		<buildDbUser>a</buildDbUser>
